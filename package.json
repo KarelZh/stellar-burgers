@@ -1,8 +1,23 @@
 {
   "name": "vite_bundler",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
+  "description": "При создании коммита автоматически запускаются проверка линтерами `stylelint`, `eslint` и форматирование `prettier`.",
+  "homepage": "https://github.com/KarelZh/stellar-burgers#readme",
+  "bugs": {
+    "url": "https://github.com/KarelZh/stellar-burgers/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KarelZh/stellar-burgers.git"
+  },
+  "license": "ISC",
+  "author": "",
   "type": "module",
+  "main": "prettier.config.js",
+  "directories": {
+    "test": "tests"
+  },
   "scripts": {
     "build": "vite build",
     "commit": "cz",
@@ -23,6 +38,11 @@
     "storybook:test": "start-server-and-test storybook http://localhost:6006 test-storybook",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
@@ -98,10 +118,5 @@
       "prettier --write"
     ],
     "./src/**/*.{json,html,md}": "prettier --write"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
   }
 }
