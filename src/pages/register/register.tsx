@@ -19,7 +19,10 @@ export const Register = (): React.JSX.Element => {
     if (!email || !password || !userName) return;
     void dispatch(registerUser({ email, password, name: userName }))
       .unwrap()
-      .then(() => navigate('/'));
+      .then(() => navigate('/'))
+      .catch((error) => {
+        console.error('Ошибка при регистрации:', error);
+      });
   };
 
   return (
