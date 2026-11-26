@@ -41,14 +41,41 @@ const mockMain: TIngredient = {
   image_large: '',
 };
 
-// Хелпер: собирает состояние с булкой и тремя начинками
+const mockMain2: TIngredient = {
+  _id: 'main-2',
+  name: 'Огнеустойчивый перец из ада',
+  type: 'main',
+  proteins: 300,
+  fat: 90,
+  carbohydrates: 180,
+  calories: 2800,
+  price: 250,
+  image: '',
+  image_mobile: '',
+  image_large: '',
+};
+
+const mockMain3: TIngredient = {
+  _id: 'main-3',
+  name: 'Квантовый салат',
+  type: 'main',
+  proteins: 10,
+  fat: 5,
+  carbohydrates: 30,
+  calories: 150,
+  price: 180,
+  image: '',
+  image_mobile: '',
+  image_large: '',
+};
+
 const stateWithIngredients = (): TConstructorState => {
   let state: TConstructorState = initialState;
 
   state = burgerConstructorReducer(state, addIngredient(mockBun));
   state = burgerConstructorReducer(state, addIngredient(mockMain));
-  state = burgerConstructorReducer(state, addIngredient(mockMain));
-  state = burgerConstructorReducer(state, addIngredient(mockMain));
+  state = burgerConstructorReducer(state, addIngredient(mockMain2));
+  state = burgerConstructorReducer(state, addIngredient(mockMain3));
 
   return state;
 };
@@ -95,19 +122,25 @@ describe('burgerConstructorSlice', () => {
     });
 
     it('небулочный ингредиент добавляется в конец массива ingredients', () => {
-      const state = burgerConstructorReducer(initialState, addIngredient(mockMain));
+      let state = burgerConstructorReducer(initialState, addIngredient(mockBun));
+      state = burgerConstructorReducer(state, addIngredient(mockMain));
 
-      expect(state.bun).toBeNull();
-      expect(state.ingredients).toHaveLength(1);
+      state = burgerConstructorReducer(state, addIngredient(mockMain2));
+
+      expect(state.ingredients).toHaveLength(2);
       expect(state.ingredients[0]._id).toBe(mockMain._id);
-      expect(state.ingredients[0].id).toBeDefined();
+      expect(state.ingredients[1]._id).toBe(mockMain2._id);
     });
 
     it('несколько начинок добавляются в порядке вызова', () => {
       const state = stateWithIngredients();
 
       expect(state.ingredients).toHaveLength(3);
-      expect(state.ingredients.every((item) => item._id === mockMain._id)).toBe(true);
+      expect(state.ingredients.map((item) => item._id)).toEqual([
+        mockMain._id,
+        mockMain2._id,
+        mockMain3._id,
+      ]);
       const ids = state.ingredients.map((item) => item.id);
       expect(new Set(ids).size).toBe(3);
     });

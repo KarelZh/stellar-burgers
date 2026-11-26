@@ -26,11 +26,20 @@ const openConstructor = async (page: Page): Promise<void> => {
     await expect(page.getByText(constructorName)).toBeVisible();
 };
 
+const getConstructor = (page: Page) =>
+    page.locator('section').filter({
+        has: page.getByRole('button', { name: 'Оформить заказ' }),
+    });
+
 const openIngredientModal = async (page: Page): Promise<void> => {
+    const ingredientsModal = page.getByRole('dialog');
+
+    await expect(ingredientsModal).toHaveCount(0);
+
     await page.getByRole('link').filter({ hasText: constructorName }).click();
 
-    const ingredientsModal = page.getByRole('dialog');
     await expect(ingredientsModal).toBeVisible();
+    await expect(ingredientsModal.getByText(constructorName)).toBeVisible();
 };
 
 const authorizeUser = async (page: Page): Promise<void> => {
@@ -51,33 +60,47 @@ const authorizeUser = async (page: Page): Promise<void> => {
     });
 };
 
-test.describe('add ingredients to constructor works correctly', function () {
-    test.beforeEach(async ({ page }) => {
-        await openConstructor(page);
-    });
+test.beforeEach(async ({ page }) => {
+    await openConstructor(page);
+});
 
+test.describe('добавление ингредиентов в конструктор', () => {
     test('добавление булок в конструктор', async ({ page }) => {
-        await addIngredients(page, constructorName);
+        const constructor = getConstructor(page);
 
-        const constructor = page.locator('section').filter({
-            has: page.getByRole('button', { name: 'Оформить заказ' }),
-        });
+        await expect(constructor.getByText(constructorName)).toHaveCount(0);
+
+        await addIngredients(page, constructorName);
 
         await expect(constructor.getByText(`${constructorName} (верх)`)).toBeVisible();
         await expect(constructor.getByText(`${constructorName} (низ)`)).toBeVisible();
     });
 
     test('добавление булки и начинки одновременно', async ({ page }) => {
-        await addIngredients(page, constructorName);
-        await addIngredients(page, fillingName);
+        const constructor = getConstructor(page);
 
-        const constructor = page.locator('section').filter({
-            has: page.getByRole('button', { name: 'Оформить заказ' }),
-        });
+        await expect(constructor.getByText(constructorName)).toHaveCount(0);
+        await expect(constructor.getByText(fillingName)).toHaveCount(0);
+
+        await addIngredients(page, constructorName);
 
         await expect(constructor.getByText(`${constructorName} (верх)`)).toBeVisible();
         await expect(constructor.getByText(`${constructorName} (низ)`)).toBeVisible();
+
+        await addIngredients(page, fillingName);
+
         await expect(constructor.getByText(fillingName)).toBeVisible();
+    });
+});
+
+test.describe('модальное окно ингредиента', () => {
+    test('открытие модального окна ингредиента', async ({ page }) => {
+        await openIngredientModal(page);
+
+        const ingredientsModal = page.getByRole('dialog');
+        await expect(ingredientsModal.getByRole('heading', { name: 'Детали ингредиента' })).toBeVisible();
+        await expect(ingredientsModal.getByText(constructorName)).toBeVisible();
+        await expect(ingredientsModal.getByText('Калории, ккал')).toBeVisible();
     });
 
     test('закрытие модального окна по крестику', async ({ page }) => {
@@ -103,15 +126,9 @@ test.describe('add ingredients to constructor works correctly', function () {
         await expect(ingredientsModal).toBeHidden();
         await expect(page).toHaveURL('/');
     });
+});
 
-    test('открытие модального окна ингредиента', async ({ page }) => {
-        await openIngredientModal(page);
-
-        const ingredientsModal = page.getByRole('dialog');
-        await expect(ingredientsModal.getByRole('heading', { name: 'Детали ингредиента' })).toBeVisible();
-        await expect(ingredientsModal.getByText('Калории, ккал')).toBeVisible();
-    });
-
+test.describe('оформление заказа', () => {
     test('создание заказа, очистка конструктора, закрытие окна заказа', async ({ page }) => {
         await authorizeUser(page);
         await page.goto('/');
@@ -128,11 +145,22 @@ test.describe('add ingredients to constructor works correctly', function () {
 
         await expect(page.getByText('Test User')).toBeVisible();
 
+        const constructor = getConstructor(page);
+
+        await expect(constructor.getByText(constructorName)).toHaveCount(0);
+        await expect(constructor.getByText(fillingName)).toHaveCount(0);
+
         await addIngredients(page, constructorName);
         await addIngredients(page, fillingName);
-        await page.getByRole('button', { name: 'Оформить заказ' }).click();
+
+        await expect(constructor.getByText(`${constructorName} (верх)`)).toBeVisible();
+        await expect(constructor.getByText(`${constructorName} (низ)`)).toBeVisible();
+        await expect(constructor.getByText(fillingName)).toBeVisible();
 
         const orderModal = page.getByRole('dialog');
+        await expect(orderModal).toHaveCount(0);
+
+        await page.getByRole('button', { name: 'Оформить заказ' }).click();
 
         await expect(orderModal).toBeVisible();
         await expect(orderModal.getByText(String(orderNumber))).toBeVisible();
@@ -142,9 +170,6 @@ test.describe('add ingredients to constructor works correctly', function () {
         expect(requestBody?.ingredients).toEqual([constructorId, filingId, constructorId]);
         expect(authorizationHeader).toBe('Bearer test-access-token');
 
-        const constructor = page.locator('section').filter({
-            has: page.getByRole('button', { name: 'Оформить заказ' }),
-        });
         await expect(constructor.getByText('Выберите булки')).toHaveCount(2);
         await expect(constructor.getByText('Выберите начинку')).toBeVisible();
 
@@ -153,3 +178,7 @@ test.describe('add ingredients to constructor works correctly', function () {
         await expect(orderModal).toBeHidden();
     });
 });
+
+
+
+
